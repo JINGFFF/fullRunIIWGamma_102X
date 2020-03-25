@@ -65,15 +65,12 @@ private:
   	edm::EDGetTokenT<reco::VertexCollection> VertexToken_;
 };
 
-
-
 ////////////////////////////////////////////////////////////////////////////////
 // construction/destruction
 ////////////////////////////////////////////////////////////////////////////////
 
 //______________________________________________________________________________
 MuonIdSelector::MuonIdSelector(const edm::ParameterSet& iConfig)
-	//  : src_    (iConfig.getParameter<edm::InputTag>     ("src"))
   	: moduleLabel_(iConfig.getParameter<std::string>   ("@module_label"))
   	, idLabel_(iConfig.existsAs<std::string>("idLabel") ? iConfig.getParameter<std::string>("idLabel") : "loose")
   	, nTot_(0)
@@ -110,7 +107,6 @@ MuonIdSelector::MuonIdSelector(const edm::ParameterSet& iConfig)
 
 }
 
- 
 //______________________________________________________________________________
 MuonIdSelector::~MuonIdSelector(){}
 
@@ -137,36 +133,20 @@ void MuonIdSelector::produce(edm::Event& iEvent,const edm::EventSetup& iSetup)
 
     	isPassing[iMu]=false;
     	const pat::Muon& mu1 = muons->at(iMu);
-    	//float isolation = 100.;
-    	//isolation =  (mu1.pfIsolationR04().sumChargedHadronPt+ std::max(0.0,mu1.pfIsolationR04().sumNeutralHadronEt+mu1.pfIsolationR04().sumPhotonEt-0.5*mu1.pfIsolationR04().sumPUPt))/mu1.pt();
-  
-    	// impact parameter variables
-    	//float d0vtx         = 0.0;
-    //	float dzvtx         = 0.0;
-
-    //	if (vtxs->size() > 0) {
-     //   	reco::VertexRef vtx(vtxs, 0);    
-    //    	d0vtx = mu1.muonBestTrack()->dxy(vtx->position());
-    //    	dzvtx = mu1.muonBestTrack()->dz(vtx->position());
-   // 	} 
-//		else {
-  //      	d0vtx = mu1.muonBestTrack()->dxy();
-    //    	dzvtx = mu1.muonBestTrack()->dz();
-    //	}
  
-    	bool isTight  = false;  /////// <--- equivalent to WP70
-    	bool isLoose  = false;  /////// <--- equivalent to WP90
+    	bool isTight  = false;  
+    	bool isLoose  = false; 
 		bool isFake	  = false;
 
-		//https://twiki.cern.ch/twiki/bin/view/CMS/SWGuideMuonIdRun2#Muon_Isolation
-  		//if(mu1.pt()>20 && fabs(mu1.eta())<2.4 && mu1.isGlobalMuon() && mu1.isPFMuon() && (mu1.globalTrack()->normalizedChi2())<10 && (mu1.globalTrack()->hitPattern().numberOfValidMuonHits())>0 && (mu1.numberOfMatchedStations())>1 && fabs(d0vtx)<0.2 && fabs(dzvtx)<0.5 &&/* (mu1.numberOfMatchedStations())>1 && */ (mu1.innerTrack()->hitPattern().numberOfValidPixelHits()) > 0 && (mu1.innerTrack()->hitPattern().trackerLayersWithMeasurement())>5 && fabs(isolation)<0.15) { isTight = true;}
+		//tight ID
 		if (mu1.pt()>20 && fabs(mu1.eta())<2.4 &&mu1.passed(reco::Muon::CutBasedIdTight|reco::Muon::PFIsoTight)) isTight = true;
-		//for fake muon study
+
+		//fake muon ID
 		if (mu1.pt()>20 && fabs(mu1.eta())<2.4 &&mu1.passed(reco::Muon::CutBasedIdTight|reco::Muon::PFIsoVeryLoose) && !mu1.passed(reco::Muon::CutBasedIdTight|reco::Muon::PFIsoTight)) isFake = true;
-		//if(mu1.pt()>20 && fabs(mu1.eta())<2.4 && mu1.isGlobalMuon() && mu1.isPFMuon() && (mu1.globalTrack()->normalizedChi2())<10 && (mu1.globalTrack()->hitPattern().numberOfValidMuonHits())>0 && (mu1.numberOfMatchedStations())>1 && fabs(d0vtx)<0.2 && fabs(dzvtx)<0.5 &&/* (mu1.numberOfMatchedStations())>1 && */ (mu1.innerTrack()->hitPattern().numberOfValidPixelHits()) > 0 && (mu1.innerTrack()->hitPattern().trackerLayersWithMeasurement())>5 && fabs(isolation)<0.4 && fabs(isolation)>0.15) { isFake = true;}
-		//loose id
-                if (mu1.pt()>10 && fabs(mu1.eta())<2.4 &&mu1.passed(reco::Muon::CutBasedIdLoose|reco::Muon::PFIsoLoose)) isLoose = true;
-  		//if(mu1.pt()>10 && fabs(mu1.eta())<2.4  && (mu1.isGlobalMuon() || mu1.isTrackerMuon()) && mu1.isPFMuon() && fabs(isolation)<0.25) { isLoose = true;}
+
+		//loose ID
+		if (mu1.pt()>10 && fabs(mu1.eta())<2.4 &&mu1.passed(reco::Muon::CutBasedIdLoose|reco::Muon::PFIsoLoose)) isLoose = true;
+
     	/// ------- Finally apply selection --------
     	if(applyTightID_ && isTight)   	isPassing[iMu]= true;
     	if(applyLooseID_ && isLoose)   	isPassing[iMu]= true;
@@ -174,7 +154,6 @@ void MuonIdSelector::produce(edm::Event& iEvent,const edm::EventSetup& iSetup)
      
  	}
  
-
 	for (unsigned int iMuon = 0; iMuon < muons -> size(); iMuon ++){     
 		if(isPassing[iMuon]) passingMuons->push_back( muons -> at(iMuon) );  
 	}
@@ -198,7 +177,6 @@ void MuonIdSelector::endJob()
 	   	<< std::endl;
 
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // plugin definition

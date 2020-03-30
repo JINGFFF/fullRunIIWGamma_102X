@@ -48,31 +48,31 @@
 class ElectronIdSelector : public edm::EDProducer
 {
 public:
-  	// construction/destruction
-  	ElectronIdSelector(const edm::ParameterSet& iConfig);
-  	virtual ~ElectronIdSelector();
+	// construction/destruction
+	ElectronIdSelector(const edm::ParameterSet& iConfig);
+	virtual ~ElectronIdSelector();
   
-  	// member functions
-  	void produce(edm::Event& iEvent,const edm::EventSetup& iSetup);
-  	void endJob();
+	// member functions
+	void produce(edm::Event& iEvent,const edm::EventSetup& iSetup);
+	void endJob();
 
 private:  
-  	// member data
-  	//edm::InputTag  src_;
-  	std::string    moduleLabel_;
-  	std::string    idLabel_;  
-  	bool           useDetectorIsolation_;
-  	bool           applyTightID_;
-  	bool           applyMediumID_;
-  	bool           applyLooseID_;
-  	bool           applyVetoID_;
-    bool           applyFakeID_;
-  	unsigned int nTot_;
-  	unsigned int nPassed_;
-  	edm::EDGetTokenT<pat::ElectronCollection> ElectronToken_;
-  	edm::EDGetTokenT<reco::VertexCollection> VertexToken_;
-  	edm::EDGetTokenT<double> RhoToken_;
-  	EffectiveAreas effectiveAreas_;
+	// member data
+	//edm::InputTag  src_;
+	std::string    moduleLabel_;
+	std::string    idLabel_;  
+	bool           useDetectorIsolation_;
+	bool           applyTightID_;
+	bool           applyMediumID_;
+	bool           applyLooseID_;
+	bool           applyVetoID_;
+	bool           applyFakeID_;
+	unsigned int nTot_;
+	unsigned int nPassed_;
+	edm::EDGetTokenT<pat::ElectronCollection> ElectronToken_;
+	edm::EDGetTokenT<reco::VertexCollection> VertexToken_;
+	edm::EDGetTokenT<double> RhoToken_;
+	EffectiveAreas effectiveAreas_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -81,57 +81,67 @@ private:
 
 //______________________________________________________________________________
 ElectronIdSelector::ElectronIdSelector(const edm::ParameterSet& iConfig)
-  	: moduleLabel_(iConfig.getParameter<std::string>   ("@module_label"))
-  	, idLabel_(iConfig.existsAs<std::string>("idLabel") ? iConfig.getParameter<std::string>("idLabel") : "loose")
-  	, useDetectorIsolation_(iConfig.existsAs<bool>("useDetectorIsolation") ? iConfig.getParameter<bool>("useDetectorIsolation") : false)
-  	, nTot_(0)
-  	, nPassed_(0)
-  	, ElectronToken_ (consumes<pat::ElectronCollection> (iConfig.getParameter<edm::InputTag>( "src" ) ) ) 
-  	, VertexToken_ (consumes<reco::VertexCollection> (iConfig.getParameter<edm::InputTag>( "vertex" ) ) )
-  	, RhoToken_ (consumes<double> (iConfig.getParameter<edm::InputTag>( "rho") ) )
-  	, effectiveAreas_( (iConfig.getParameter<edm::FileInPath>("effAreasConfigFile")).fullPath() )
+	: moduleLabel_(iConfig.getParameter<std::string>   ("@module_label"))
+	, idLabel_(iConfig.existsAs<std::string>("idLabel") ? iConfig.getParameter<std::string>("idLabel") : "loose")
+	, useDetectorIsolation_(iConfig.existsAs<bool>("useDetectorIsolation") ? iConfig.getParameter<bool>("useDetectorIsolation") : false)
+	, nTot_(0)
+	, nPassed_(0)
+	, ElectronToken_ (consumes<pat::ElectronCollection> (iConfig.getParameter<edm::InputTag>( "src" ) ) ) 
+	, VertexToken_ (consumes<reco::VertexCollection> (iConfig.getParameter<edm::InputTag>( "vertex" ) ) )
+	, RhoToken_ (consumes<double> (iConfig.getParameter<edm::InputTag>( "rho") ) )
+	, effectiveAreas_( (iConfig.getParameter<edm::FileInPath>("effAreasConfigFile")).fullPath() )
 {
-  	produces<std::vector<pat::Electron> >();
+	produces<std::vector<pat::Electron> >();
 
-  	/// ------- Decode the ID criteria --------
-  	applyTightID_ 	= false;
-  	applyMediumID_ 	= false;
-  	applyLooseID_ 	= false;
-  	applyVetoID_ 	= false;
-    applyFakeID_    = false;
+	/// ------- Decode the ID criteria --------
+	applyTightID_ 	= false;
+	applyMediumID_ 	= false;
+	applyLooseID_ 	= false;
+	applyVetoID_ 	= false;
+ 	applyFakeID_    = false;
 
-  	if( (idLabel_.compare("tight")==0) || 
-      	(idLabel_.compare("Tight")==0) || 
-      	(idLabel_.compare("TIGHT")==0) ||
-      	(idLabel_.compare("WP70")==0) ||
-      	(idLabel_.compare("wp70")==0) )  
- 	applyTightID_ = true;
+	if((idLabel_.compare("tight")==0) 
+		|| (idLabel_.compare("Tight")==0) 
+		|| (idLabel_.compare("TIGHT")==0) 
+		|| (idLabel_.compare("WP70")==0) 
+		|| (idLabel_.compare("wp70")==0))
+	{  
+ 		applyTightID_ = true;
+	}
 
-  	else if( (idLabel_.compare("medium")==0) ||
-      	(idLabel_.compare("Medium")==0) ||
-      	(idLabel_.compare("MEDIUM")==0) ||
-      	(idLabel_.compare("WP80")==0) ||
-      	(idLabel_.compare("wp80")==0) )  
-	applyMediumID_ = true;
+	else if((idLabel_.compare("medium")==0) 
+		|| (idLabel_.compare("Medium")==0) 
+		|| (idLabel_.compare("MEDIUM")==0) 
+		|| (idLabel_.compare("WP80")==0) 
+		|| (idLabel_.compare("wp80")==0) ) 
+	{ 
+		applyMediumID_ = true;
+	}
 
-  	else if( (idLabel_.compare("loose")==0) || 
-      	(idLabel_.compare("Loose")==0) || 
-      	(idLabel_.compare("LOOSE")==0) ||
-      	(idLabel_.compare("WP90")==0) ||
-      	(idLabel_.compare("wp90")==0) )  
-	applyLooseID_ = true;
+	else if( (idLabel_.compare("loose")==0) 
+		|| (idLabel_.compare("Loose")==0) 
+		|| (idLabel_.compare("LOOSE")==0) 
+		|| (idLabel_.compare("WP90")==0) 
+		|| (idLabel_.compare("wp90")==0) )  
+	{
+		applyLooseID_ = true;
+	}
 
-  	else if( (idLabel_.compare("veto")==0) || 
-      	(idLabel_.compare("Veto")==0) || 
-      	(idLabel_.compare("VETO")==0) ||
-      	(idLabel_.compare("VETOid")==0) ||
-      	(idLabel_.compare("VetoId")==0) )  
-	applyVetoID_ = true;
+	else if( (idLabel_.compare("veto")==0) 
+		|| (idLabel_.compare("Veto")==0) 
+		|| (idLabel_.compare("VETO")==0) 
+		|| (idLabel_.compare("VETOid")==0) 
+		|| (idLabel_.compare("VetoId")==0) )  
+	{
+		applyVetoID_ = true;
+	}
 
-    else if( (idLabel_.compare("fake")==0) ||
-        (idLabel_.compare("Fake")==0) ||
-        (idLabel_.compare("FAKE")==0) )
-    applyFakeID_ = true;
+	else if( (idLabel_.compare("fake")==0) 
+		|| (idLabel_.compare("Fake")==0) 
+		|| (idLabel_.compare("FAKE")==0) )
+	{
+		applyFakeID_ = true;
+	}
 }
 
  
@@ -147,72 +157,70 @@ ElectronIdSelector::~ElectronIdSelector(){}
 void ElectronIdSelector::produce(edm::Event& iEvent,const edm::EventSetup& iSetup)
 {
 
-   	edm::Handle<reco::VertexCollection> vtxs;
-   	iEvent.getByToken(VertexToken_, vtxs);
+	edm::Handle<reco::VertexCollection> vtxs;
+	iEvent.getByToken(VertexToken_, vtxs);
 
-  	std::unique_ptr<std::vector<pat::Electron> > passingElectrons(new std::vector<pat::Electron >);
-   	edm::Handle<pat::ElectronCollection > electrons;
-   	iEvent.getByToken(ElectronToken_, electrons);  
+	std::unique_ptr<std::vector<pat::Electron> > passingElectrons(new std::vector<pat::Electron >);
+	edm::Handle<pat::ElectronCollection > electrons;
+	iEvent.getByToken(ElectronToken_, electrons);  
 
-  	bool* isPassing = new bool[electrons->size()];
-  	double rhoVal_;
-  	rhoVal_=-99.;
-  	edm::Handle<double> rho;
-  	iEvent.getByToken(RhoToken_,rho);
-  	rhoVal_ = *rho;
+	bool* isPassing = new bool[electrons->size()];
+	double rhoVal_;
+	rhoVal_=-99.;
+	edm::Handle<double> rho;
+	iEvent.getByToken(RhoToken_,rho);
+	rhoVal_ = *rho;
 
-  	for(unsigned int iElec=0; iElec<electrons->size(); iElec++) { 
+	for(unsigned int iElec=0; iElec<electrons->size(); iElec++) { 
 
-    	isPassing[iElec]=false;
-    	const pat::Electron& ele = electrons->at(iElec);
+		isPassing[iElec]=false;
+		const pat::Electron& ele = electrons->at(iElec);
 
-    	// -------- Make sure that the electron is within acceptance ------
-    	float eta = ele.superCluster()->eta();
-    	bool isEB = ele.isEB() && fabs(eta) < 1.479;
-    	bool isEE = ele.isEE() && fabs(eta) > 1.479 && fabs(eta) < 2.5;
+		// -------- Make sure that the electron is within acceptance ------
+		float eta = ele.superCluster()->eta();
+		bool isEB = ele.isEB() && fabs(eta) < 1.479;
+ 		bool isEE = ele.isEE() && fabs(eta) > 1.479 && fabs(eta) < 2.5;
 
-    	//bool inAcceptance = (isEB || isEE) && (ele.ecalDrivenSeed()==1);
-    	float pt  = ele.pt();
-    	float energy = ele.superCluster()->energy();
+		//bool inAcceptance = (isEB || isEE) && (ele.ecalDrivenSeed()==1);
+		float pt  = ele.pt();
+		float energy = ele.superCluster()->energy();
 
-    	// -------- Compute Detector isolation ------
-    	float eA = effectiveAreas_.getEffectiveArea(fabs(eta));
-    	float pf_isolation = ( ( ele.pfIsolationVariables().sumChargedHadronPt
-                                   + std::max( 0., ele.pfIsolationVariables().sumNeutralHadronEt + ele.pfIsolationVariables().sumPhotonEt - eA*rhoVal_) )
-                                 / pt );
-    	float isolation = 100.;
-    	isolation = pf_isolation;
+		// -------- Compute Detector isolation ------
+		float eA = effectiveAreas_.getEffectiveArea(fabs(eta));
+		float pf_isolation = ( ( ele.pfIsolationVariables().sumChargedHadronPt + std::max( 0., ele.pfIsolationVariables().sumNeutralHadronEt + ele.pfIsolationVariables().sumPhotonEt - eA*rhoVal_) ) / pt );
+		float isolation = 100.;
+		isolation = pf_isolation;
 
-    	// -------- Compute ID ------
-    	double sigmaIEtaIEta   = ele.full5x5_sigmaIetaIeta();
-    	double dPhiIn    = fabs(ele.deltaPhiSuperClusterTrackAtVtx());
-    	double dEtaIn    = fabs(ele.superCluster().isNonnull() && ele.superCluster()->seed().isNonnull() ? ele.deltaEtaSuperClusterTrackAtVtx() - ele.superCluster()->eta() + ele.superCluster()->seed()->eta() : std::numeric_limits<float>::max());
-    	double hoe     = ele.hadronicOverEm();
-    	double ooemoop = fabs((1.0/ele.ecalEnergy() - ele.eSuperClusterOverP()/ele.ecalEnergy()));
+		// -------- Compute ID ------
+		double sigmaIEtaIEta   = ele.full5x5_sigmaIetaIeta();
+		double dPhiIn    = fabs(ele.deltaPhiSuperClusterTrackAtVtx());
+		double dEtaIn    = fabs(ele.superCluster().isNonnull() && ele.superCluster()->seed().isNonnull() ? ele.deltaEtaSuperClusterTrackAtVtx() - ele.superCluster()->eta() + ele.superCluster()->seed()->eta() : std::numeric_limits<float>::max());
+		double hoe     = ele.hadronicOverEm();
+		double ooemoop = fabs((1.0/ele.ecalEnergy() - ele.eSuperClusterOverP()/ele.ecalEnergy()));
 
-    	// impact parameter variables
-    	float d0vtx         = 0.0;
-    	float dzvtx         = 0.0;
-    	if (vtxs->size() > 0) {
-        	reco::VertexRef vtx(vtxs, 0);    
-        	d0vtx = ele.gsfTrack()->dxy(vtx->position());
-        	dzvtx = ele.gsfTrack()->dz(vtx->position());
-    	} 
+		// impact parameter variables
+		float d0vtx         = 0.0;
+		float dzvtx         = 0.0;
+		if (vtxs->size() > 0) {
+			reco::VertexRef vtx(vtxs, 0);    
+			d0vtx = ele.gsfTrack()->dxy(vtx->position());
+			dzvtx = ele.gsfTrack()->dz(vtx->position());
+ 		} 
 		else {
-        	d0vtx = ele.gsfTrack()->dxy();
-        	dzvtx = ele.gsfTrack()->dz();
-    	}
+			d0vtx = ele.gsfTrack()->dxy();
+			dzvtx = ele.gsfTrack()->dz();
+		}
 
-      	bool vtxFitConversion = !(ele.passConversionVeto()==1);
-    	float mHits=ele.gsfTrack()->hitPattern().numberOfLostHits(reco::HitPattern::MISSING_INNER_HITS);  
+		bool vtxFitConversion = !(ele.passConversionVeto()==1);
+		float mHits=ele.gsfTrack()->hitPattern().numberOfLostHits(reco::HitPattern::MISSING_INNER_HITS);  
 
-    	bool isTight  	= false;  /////// <--- equivalent to WP70
-    	bool isMedium 	= false;  /////// <--- equivalent to WP80
-    	bool isLoose  	= false;  /////// <--- equivalent to WP90
-    	bool isVeto    	= false;  /////// <--- the loosest cut for veto
+		bool isTight  	= false;  /////// <--- equivalent to WP70
+		bool isMedium 	= false;  /////// <--- equivalent to WP80
+		bool isLoose  	= false;  /////// <--- equivalent to WP90
+		bool isVeto    	= false;  /////// <--- the loosest cut for veto
 		bool isFake		= false;
 
-    	// ---------- cut-based ID -----------------
+		// ---------- cut-based ID -----------------
 		isTight = (pt>20.)  &&
 				(!vtxFitConversion) &&
       			((isEB && mHits<=1 
@@ -300,36 +308,35 @@ void ElectronIdSelector::produce(edm::Event& iEvent,const edm::EventSetup& iSetu
 		isFake = (!isTight) && isVeto;
 
 
-    	/// ------- Finally apply selection --------
-    	if(applyTightID_ && isTight)   	isPassing[iElec]= true;
-    	if(applyMediumID_ && isMedium) 	isPassing[iElec]= true;
-    	if(applyLooseID_ && isLoose)  	isPassing[iElec]= true;
-    	if(applyVetoID_ && isVeto) 		isPassing[iElec]= true;
-        if(applyFakeID_ && isFake)      isPassing[iElec]= true;
+		/// ------- Finally apply selection --------
+		if(applyTightID_ && isTight)   	isPassing[iElec]= true;
+		if(applyMediumID_ && isMedium) 	isPassing[iElec]= true;
+		if(applyLooseID_ && isLoose)  	isPassing[iElec]= true;
+		if(applyVetoID_ && isVeto) 		isPassing[iElec]= true;
+		if(applyFakeID_ && isFake)      isPassing[iElec]= true;
     
  	}
   
 	for (unsigned int iElectron = 0; iElectron < electrons -> size(); iElectron ++){     
 		if(isPassing[iElectron]) passingElectrons->push_back( electrons -> at(iElectron) );       
-  	}
+	}
  
-  	nTot_  +=electrons->size();
-  	nPassed_+=passingElectrons->size();
+	nTot_  +=electrons->size();
+	nPassed_+=passingElectrons->size();
 
-  	delete [] isPassing;  
-  	iEvent.put(std::move(passingElectrons));
+	delete [] isPassing;  
+	iEvent.put(std::move(passingElectrons));
 }
 
 //______________________________________________________________________________
 void ElectronIdSelector::endJob()
 {
-  	std::stringstream ss;
-  	ss<<"nTot="<<nTot_<<" nPassed="<<nPassed_
-    	<<" effPassed="<<100.*(nPassed_/(double)nTot_)<<"%\n";
-  	std::cout<<"++++++++++++++++++++++++++++++++++++++++++++++++++"
-	   	<<"\n"<<moduleLabel_<<"(ElectronIdSelector) SUMMARY:\n"<<ss.str()
-	   	<<"++++++++++++++++++++++++++++++++++++++++++++++++++"
-	   	<< std::endl;
+	std::stringstream ss;
+	ss<<"nTot="<<nTot_<<" nPassed="<<nPassed_<<" effPassed="<<100.*(nPassed_/(double)nTot_)<<"%\n";
+	std::cout<<"++++++++++++++++++++++++++++++++++++++++++++++++++"
+		<<"\n"<<moduleLabel_<<"(ElectronIdSelector) SUMMARY:\n"<<ss.str()
+		<<"++++++++++++++++++++++++++++++++++++++++++++++++++"
+		<< std::endl;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

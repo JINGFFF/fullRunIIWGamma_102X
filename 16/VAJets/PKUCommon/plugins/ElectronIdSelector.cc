@@ -223,7 +223,7 @@ void ElectronIdSelector::produce(edm::Event& iEvent,const edm::EventSetup& iSetu
 		// ---------- cut-based ID -----------------
 		isTight = (pt>20.)  &&
 				(!vtxFitConversion) &&
-      			((isEB && mHits<=1 
+				((isEB && mHits<=1 
 				&& isolation<0.0287+0.506/pt 
 				&& sigmaIEtaIEta<0.0104 
 				&& dPhiIn<0.022 
@@ -232,7 +232,7 @@ void ElectronIdSelector::produce(edm::Event& iEvent,const edm::EventSetup& iSetu
 				&& ooemoop<0.159 
 				&& fabs(d0vtx)<0.05 
 				&& fabs(dzvtx)<0.10 )  ||
-      			(isEE && mHits<=1 
+				(isEE && mHits<=1 
 				&& isolation<0.0445+0.963/pt 
 				&& sigmaIEtaIEta<0.0353 
 				&& dPhiIn<0.0236 
@@ -244,7 +244,7 @@ void ElectronIdSelector::produce(edm::Event& iEvent,const edm::EventSetup& iSetu
 
 		isMedium = (pt>20.)  &&
 				(!vtxFitConversion) &&
-        		((isEB && mHits<=1 
+				((isEB && mHits<=1 
 				&& isolation<0.0478+0.506/pt 
 				&& sigmaIEtaIEta<0.0106 
 				&& dPhiIn<0.0547 
@@ -253,7 +253,7 @@ void ElectronIdSelector::produce(edm::Event& iEvent,const edm::EventSetup& iSetu
 				&& ooemoop<0.184 
 				&& fabs(d0vtx)<0.05 
 				&& fabs(dzvtx)<0.10) ||
-         		(isEE && mHits<=1 
+				(isEE && mHits<=1 
 				&& isolation<0.0658+0.963/pt 
 				&& sigmaIEtaIEta<0.0387 
 				&& dPhiIn<0.0394 
@@ -265,7 +265,7 @@ void ElectronIdSelector::produce(edm::Event& iEvent,const edm::EventSetup& iSetu
 
 		isLoose = (pt>20.)  &&
 				(!vtxFitConversion) &&
-        		((isEB && mHits<=1 
+				((isEB && mHits<=1 
 				&& isolation<0.112+0.506/pt 
 				&& sigmaIEtaIEta<0.0112 
 				&& dPhiIn<0.0884  
@@ -274,7 +274,7 @@ void ElectronIdSelector::produce(edm::Event& iEvent,const edm::EventSetup& iSetu
 				&& ooemoop<0.193 
 				&& fabs(d0vtx)<0.05 
 				&& fabs(dzvtx)<0.10) ||
-         		(isEE && mHits<=1 
+				(isEE && mHits<=1 
 				&& isolation<0.108+0.963/pt 
 				&& sigmaIEtaIEta<0.0425  
 				&& dPhiIn<0.169 
@@ -286,7 +286,7 @@ void ElectronIdSelector::produce(edm::Event& iEvent,const edm::EventSetup& iSetu
 
 		isVeto = (pt>20.) &&
 				(!vtxFitConversion) &&
-        		((isEB && mHits<=2 
+				((isEB && mHits<=2 
 				&& isolation<0.198+0.506/pt 
 				&& sigmaIEtaIEta<0.0126 
 				&& dPhiIn<0.148 
@@ -295,7 +295,7 @@ void ElectronIdSelector::produce(edm::Event& iEvent,const edm::EventSetup& iSetu
 				&& ooemoop<0.209 
 				&& fabs(d0vtx)<0.05 
 				&& fabs(dzvtx)<0.10 ) ||
-         		(isEE && mHits<=3 
+				(isEE && mHits<=3 
 				&& isolation<0.203+0.963/pt 
 				&& sigmaIEtaIEta<0.0457 
 				&& dPhiIn<0.19 

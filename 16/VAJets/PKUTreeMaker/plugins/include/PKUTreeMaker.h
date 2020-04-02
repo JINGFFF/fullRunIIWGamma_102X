@@ -880,4 +880,81 @@ PKUTreeMaker::PKUTreeMaker(const edm::ParameterSet& iConfig)  //:
 
 }
 
+PKUTreeMaker::~PKUTreeMaker()
+{
+}
+
+void PKUTreeMaker::beginRun(const edm::Run& iRun, const edm::EventSetup& iSetup) {
+
+    elPaths1.clear();
+    elPaths2.clear();
+    muPaths1.clear();
+    muPaths2.clear();
+    muPaths3.clear();
+
+    std::cout << "-----begin-----" << std::endl;
+    bool changed;
+    if (!hltConfig.init(iRun, iSetup, "HLT", changed)) {
+        edm::LogError("HltAnalysis") << "Initialization of HLTConfigProvider failed!!";
+        return;
+    }
+    for (size_t i = 0; i < elPaths1_.size(); i++) {
+        std::vector<std::string> foundPaths1 = hltConfig.matched(hltConfig.triggerNames(), elPaths1_[i]);
+        while (!foundPaths1.empty()) {
+            elPaths1.push_back(foundPaths1.back());
+            foundPaths1.pop_back();
+        }
+    }
+    for (size_t i = 0; i < muPaths1_.size(); i++) {
+        std::vector<std::string> foundPaths1 = hltConfig.matched(hltConfig.triggerNames(), muPaths1_[i]);
+        while (!foundPaths1.empty()) {
+            muPaths1.push_back(foundPaths1.back());
+            foundPaths1.pop_back();
+        }
+    }
+    std::cout << "\n************** HLT-1 Information **************\n";
+    for (size_t i = 0; i < elPaths1.size(); i++)
+        std::cout << "\n Electron paths-1:    " << i << "  " << elPaths1[i].c_str() << "\t" << std::endl;
+    for (size_t i = 0; i < muPaths1.size(); i++)
+        std::cout << "\n Muon paths-1:   " << i << "  " << muPaths1[i].c_str() << "\t" << std::endl;
+    std::cout << "\n*********************************************\n\n";
+
+    for (size_t i = 0; i < elPaths2_.size(); i++) {
+        std::vector<std::string> foundPaths2 = hltConfig.matched(hltConfig.triggerNames(), elPaths2_[i]);
+        while (!foundPaths2.empty()) {
+            elPaths2.push_back(foundPaths2.back());
+            foundPaths2.pop_back();
+        }
+    }
+    for (size_t i = 0; i < muPaths2_.size(); i++) {
+        std::vector<std::string> foundPaths2 = hltConfig.matched(hltConfig.triggerNames(), muPaths2_[i]);
+        while (!foundPaths2.empty()) {
+            muPaths2.push_back(foundPaths2.back());
+            foundPaths2.pop_back();
+        }
+    }
+    std::cout << "\n************** HLT-2 Information **************\n";
+    for (size_t i = 0; i < elPaths2.size(); i++)
+        std::cout << "\n Electron paths-2:    " << i << "  " << elPaths2[i].c_str() << "\t" << std::endl;
+    for (size_t i = 0; i < muPaths2.size(); i++)
+        std::cout << "\n Muon paths-2:   " << i << "  " << muPaths2[i].c_str() << "\t" << std::endl;
+    std::cout << "\n*********************************************\n\n";
+    for (size_t i = 0; i < muPaths3_.size(); i++) {
+        std::vector<std::string> foundPaths3 = hltConfig.matched(hltConfig.triggerNames(), muPaths3_[i]);
+        while (!foundPaths3.empty()) {
+            muPaths3.push_back(foundPaths3.back());
+            foundPaths3.pop_back();
+        }
+    }
+
+    std::cout << "\n************** HLT-3 Information **************\n";
+    for (size_t i = 0; i < muPaths3.size(); i++)
+        std::cout << "\n Muon paths-3:   " << i << "  " << muPaths3[i].c_str() << "\t" << std::endl;
+    std::cout << "\n*********************************************\n\n";
+}
+
+void PKUTreeMaker::endJob() {
+    std::cout << "PKUTreeMaker endJob()..." << std::endl;
+}
+
 #endif

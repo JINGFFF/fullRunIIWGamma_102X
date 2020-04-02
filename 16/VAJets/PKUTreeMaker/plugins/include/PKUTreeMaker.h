@@ -43,6 +43,7 @@ private:
     int matchToTrueLep(double lept_eta, double lept_phi, const edm::Handle<edm::View<reco::GenParticle>>& genParticles, double& dR, int& ispromptLep);  //////////////////////////////////
 
     void findFirstNonPhotonMother(const reco::Candidate* particle, int& ancestorPID, int& ancestorStatus);
+    void setDummyValues();
 
     float                                             EAch(float x);
     float                                             EAnh(float x);

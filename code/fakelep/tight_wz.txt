@@ -1,0 +1,3 @@
+/home/pku/pengj/VBSWGamma/94X2016/fake_lepton_rate/data/fakelepton_DY.root
+/home/pku/pengj/VBSWGamma/94X2016/fake_lepton_rate/data/fakelepton_WJets.root
+#/data/pku/home/pengj/VBSWGamma/2016/fakerate/fake_lepton/data3/tight_wz.root

@@ -77,21 +77,6 @@ void PKUTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
     nevent = iEvent.eventAuxiliary().event();
     run    = iEvent.eventAuxiliary().run();
     ls     = iEvent.eventAuxiliary().luminosityBlock();
-    /*
-        edm::Handle<LHEEventProduct> lheEvtInfo;
-        iEvent.getByToken(LheToken_, lheEvtInfo);
-
-	for(int icount=0; icount<lheEvtInfo->hepeup().NUP; icount++){
-		if( abs(lheEvtInfo->hepeup().IDUP[icount])==22 && lheEvtInfo->hepeup().ISTUP[icount]==1)
-		{    float px = (lheEvtInfo->hepeup().PUP[icount])[0];
-		     float py = (lheEvtInfo->hepeup().PUP[icount])[1];
-		     float pt = sqrt(px*px+py*py);
-	   	     lhephoton_pt=pt;
-		}
-	}
-   */ 
-
- 
 
     //events weight
     if (RunOnMC_) {
@@ -159,48 +144,8 @@ void PKUTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
         if (HLT_Mu3 < mtemp3)
             HLT_Mu3 = mtemp3;
     }
-/*
-    edm::Handle<pat::METCollection> METs_;
-    iEvent.getByToken(metToken_, METs_);
-    //https://indico.cern.ch/event/557439/contributions/2246809/attachments/1344891/2027219/METValidationStudies.pdf
-    //https://hypernews.cern.ch/HyperNews/CMS/get/physTools/3361/1.html
-    //https://github.com/cms-sw/cmssw/blob/fdbcb59c16cafd2a9b56177064bc0b6b93cc51dc/DataFormats/PatCandidates/interface/MET.h#L151-L168
-    if (!METs_.isValid())
-        return;
-    const pat::MET* patmet              = &(METs_->front());
-    double          met                 = METs_->front().pt();
-    double          met_JetResUp        = patmet->shiftedPt(pat::MET::JetResUp,pat::MET::Type1Smear);
 
-    //double          met_JetResDownSmear = patmet->shiftedPt(pat::MET::JetResDownSmear);
-    double          met_JetEnUp         = patmet->shiftedPt(pat::MET::JetEnUp);
-    double          met_JetEnDown       = patmet->shiftedPt(pat::MET::JetEnDown);
-    if (RunOnMC_) {
-        genMET = METs_->front().genMET()->pt();
-    }
-    std::cout << "______________ MET ______________" << std::endl;
-    std::cout << met << "|" << METs_->front().phi() << "|" << genMET <<"|"<<METs_->front().uncorPt()<< "|" << met_JetResUp << "|" << "|" << met_JetResDown << "|" << "|" << met_JetEnUp << "|" << met_JetEnDown << std::endl;
-    std::cout << "______________ MET ______________" << std::endl;
-    MET_et=met;
-    MET_phi=METs_->front().phi();
-    //MET_sumEt=METs_->front().SumEt();
-    //MET_corrPx=METs_->front().Px();
-    //MET_corrPy=METs_->front().Py();
-    MET_et_new=met;
-    MET_et_JEC_up = met_JetEnUp;
-    MET_et_JEC_down = met_JetEnDown;
-    MET_et_JER_up = met_JetResUp;
-    MET_et_JER_down = met_JetResDown;
-    MET_phi_new=METs_->front().phi();
-    MET_phi_JEC_up=patmet->shiftedPhi(pat::MET::JetEnUp);
-    MET_phi_JEC_down=patmet->shiftedPhi(pat::MET::JetEnDown);
-    MET_phi_JER_up=patmet->shiftedPhi(pat::MET::JetResUp,pat::MET::Type1Smear);
-    MET_phi_JER_down=patmet->shiftedPhi(pat::MET::JetResDown,pat::MET::Type1Smear);
-    //MET_sumEt_new = METs_->front().SumEt();
-    MET_sumEt_JEC_up = patmet->shiftedSumEt(pat::MET::JetEnUp);
-    MET_sumEt_JEC_down = patmet->shiftedSumEt(pat::MET::JetEnDown);
-    MET_sumEt_JER_up = patmet->shiftedSumEt(pat::MET::JetResUp,pat::MET::Type1Smear);
-    MET_sumEt_JER_down = patmet->shiftedSumEt(pat::MET::JetResDown,pat::MET::Type1Smear);
-*/   
+
    edm::Handle<edm::View<reco::Candidate> > leptonicVs;
    iEvent.getByToken(leptonicVSrc_, leptonicVs);
 

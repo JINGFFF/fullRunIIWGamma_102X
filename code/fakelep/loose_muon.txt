@@ -1,0 +1,8 @@
+/home/pku/pengj/VBSWGamma/94X2016/fake_lepton_rate/data/outc_mu_b.root
+/home/pku/pengj/VBSWGamma/94X2016/fake_lepton_rate/data/outc_mu_c.root
+/home/pku/pengj/VBSWGamma/94X2016/fake_lepton_rate/data/outc_mu_d.root
+/home/pku/pengj/VBSWGamma/94X2016/fake_lepton_rate/data/outc_mu_e.root
+/home/pku/pengj/VBSWGamma/94X2016/fake_lepton_rate/data/outc_mu_f.root
+/home/pku/pengj/VBSWGamma/94X2016/fake_lepton_rate/data/outc_mu_g.root
+/home/pku/pengj/VBSWGamma/94X2016/fake_lepton_rate/data/outc_mu_h.root
+#/data/pku/home/pengj/VBSWGamma/2016/fakerate/fake_lepton/data3/control_mu.root

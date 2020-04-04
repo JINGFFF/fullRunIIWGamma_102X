@@ -1,0 +1,4 @@
+/data/pku/home/pengj/VBSWGamma/2016/fakerate/fake_lepton/data3/tight_mu.root
+/data/pku/home/pengj/VBSWGamma/2016/fakerate/fake_lepton/data3/control_mu.root
+/data/pku/home/pengj/VBSWGamma/2016/fakerate/fake_lepton/data3/tight_wz.root
+/data/pku/home/pengj/VBSWGamma/2016/fakerate/fake_lepton/data3/control_wz.root

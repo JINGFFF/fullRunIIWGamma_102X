@@ -233,6 +233,8 @@ private:
     double Mjj_new_f, Mjj_JEC_up_f, Mjj_JEC_down_f, Mjj_JER_up_f, Mjj_JER_down_f;
     double zepp_new_f, zepp_JEC_up_f, zepp_JEC_down_f, zepp_JER_up_f, zepp_JER_down_f;
 
+	bool is_leptonicVs_Empty;
+	double energyVlepJEC;
 
     /// Parameters to steer the treeDumper
     int                      originalNEvents_;

@@ -66,6 +66,16 @@
 #include "include/PKUTreeMaker.h"
 #include "include/setDummyValues.h"
 #include "include/function.h"
+#include "include/hlt_info.h"
+#include "include/weight_info.h"
+#include "include/gen_info.h"
+#include "include/filter_info.h"
+#include "include/met_info.h"
+#include "include/leptonicV_info.h"
+#include "include/photon_info.h"
+
+
+
 using namespace std;
 
        
@@ -73,194 +83,41 @@ using namespace std;
 //------------------------------------
 void PKUTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
     using namespace edm;
-    setDummyValues();  //Initalize variables with dummy values
+
+	//Initalize variables with dummy values
+    setDummyValues(); 
+
     nevent = iEvent.eventAuxiliary().event();
     run    = iEvent.eventAuxiliary().run();
     ls     = iEvent.eventAuxiliary().luminosityBlock();
 
     //events weight
     if (RunOnMC_) {
-        //        std::cout<<lheEvtInfo->hepeup().NUP<<std::endl;
-        edm::Handle<GenEventInfoProduct> genEvtInfo;
-        iEvent.getByToken(GenToken_, genEvtInfo);
-        theWeight = genEvtInfo->weight();
-        if (theWeight > 0)
-            nump = nump + 1;
-        if (theWeight < 0)
-            numm = numm + 1;
-        edm::Handle<std::vector<PileupSummaryInfo>> PupInfo;
-        iEvent.getByToken(PUToken_, PupInfo);
-        std::vector<PileupSummaryInfo>::const_iterator PVI;
-        for (PVI = PupInfo->begin(); PVI != PupInfo->end(); ++PVI) {
-            nBX = PVI->getBunchCrossing();
-            if (nBX == 0) {  // "0" is the in-time crossing, negative values are the early crossings, positive are late
-                npT  = PVI->getTrueNumInteractions();
-                npIT = PVI->getPU_NumInteractions();
-            }
-        }
-		edm::Handle< double > theprefweight;
-		iEvent.getByToken(prefweight_token, theprefweight ) ;
-		_prefiringweight =(*theprefweight);
 
-		edm::Handle< double > theprefweightup;
-		iEvent.getByToken(prefweightup_token, theprefweightup ) ;
-		_prefiringweightup =(*theprefweightup);
+		weight_info(iEvent);
 
-		edm::Handle< double > theprefweightdown;
-		iEvent.getByToken(prefweightdown_token, theprefweightdown ) ;
-		_prefiringweightdown =(*theprefweightdown);
-    }
-    Handle<TriggerResults> trigRes;
-    iEvent.getByToken(hltToken_, trigRes);
-    int xtemp1 = 0;
-    for (size_t i = 0; i < elPaths1.size(); i++) {
-        xtemp1 = (int)trigRes->accept(hltConfig.triggerIndex(elPaths1[i]));
-        if (HLT_Ele1 < xtemp1)
-            HLT_Ele1 = xtemp1;
-    }
-    int xtemp2 = 0;
-    for (size_t i = 0; i < elPaths2.size(); i++) {
-        xtemp2 = (int)trigRes->accept(hltConfig.triggerIndex(elPaths2[i]));
-        if (HLT_Ele2 < xtemp2)
-            HLT_Ele2 = xtemp2;
-    }
-    int mtemp1 = 0;
-    for (size_t i = 0; i < muPaths1.size(); i++) {
-        //std::cout<<muPaths1.size()<<" "<<muPaths1[i]<<std::endl;
-        //std::cout<<(hltConfig.triggerIndex(muPaths1[i]))<<std::endl;
-        mtemp1 = (int)trigRes->accept(hltConfig.triggerIndex(muPaths1[i]));
-        if (HLT_Mu1 < mtemp1)
-            HLT_Mu1 = mtemp1;
-    }
-    int mtemp2 = 0;
-    for (size_t i = 0; i < muPaths2.size(); i++) {
-        mtemp2 = (int)trigRes->accept(hltConfig.triggerIndex(muPaths2[i]));
-        if (HLT_Mu2 < mtemp2)
-            HLT_Mu2 = mtemp2;
-    }
-    int mtemp3 = 0;
-    for (size_t i = 0; i < muPaths3.size(); i++) {
-        mtemp3 = (int)trigRes->accept(hltConfig.triggerIndex(muPaths3[i]));
-        if (HLT_Mu3 < mtemp3)
-            HLT_Mu3 = mtemp3;
     }
 
-
-   edm::Handle<edm::View<reco::Candidate> > leptonicVs;
-   iEvent.getByToken(leptonicVSrc_, leptonicVs);
-
-    if (leptonicVs->empty()) {
-        outTree_->Fill();
-        return;
-    }  //outTree_->Fill();
-
-    iEvent.getByToken(rhoToken_, rho_);
-    double fastJetRho = *(rho_.product());
-    useless           = fastJetRho;
-
-    edm::Handle<edm::View<pat::Jet>> ak4jets;
-    iEvent.getByToken(ak4jetsSrc_, ak4jets);
-
-    edm::Handle<edm::View<pat::Photon>> photons;
-    iEvent.getByToken(photonSrc_, photons);
-
-    //if (photons->empty()) {
-    //    outTree_->Fill();
-    //    return;
-    //}  //outTree_->Fill();
-
-   if (photons->empty()) {   hasphoton = 0.;  }
-   else {hasphoton =1.;}//outTree_->Fill();
-
-    edm::Handle<edm::View<reco::GenParticle>> genParticles;  //define genParticle
-    iEvent.getByToken(genSrc_, genParticles);
-    //   iEvent.getByLabel(InputTag("packedGenParticles"), genParticles);
-
+	// store HLT Info
+	hlt_info(edm::Event const & iEvent);
+	
+	//Gen info for photon, lepton, and jets
     if (RunOnMC_) {
-        int ipp = 0, imm = 0, iee = 0;
-        for (size_t i = 0; i < genParticles->size(); i++) {  // std::cout<<"i = "<<i<<std::endl;
-            const reco::Candidate* particle = &(*genParticles)[i];
-            if (abs(particle->pdgId()) == 22 && particle->status() == 1 && (*genParticles)[i].isPromptFinalState() > 0 && ipp < 6) {
-                genphoton_pt[ipp]  = particle->pt();
-                genphoton_eta[ipp] = particle->eta();
-                genphoton_phi[ipp] = particle->phi();
-                ipp++;  //	std::cout<<"ipp = "<<ipp<<std::endl;
-            }           //std::cout<<"ipp = "<<ipp<<std::endl;
-            if (abs(particle->pdgId()) == 13 && particle->status() == 1 && (*genParticles)[i].isPromptFinalState() > 0 && imm < 6) {
-                genmuon_pt[imm]  = particle->pt();
-                genmuon_eta[imm] = particle->eta();
-                genmuon_phi[imm] = particle->phi();
-                imm++;
-            }
-            if (abs(particle->pdgId()) == 11 && particle->status() == 1 && (*genParticles)[i].isPromptFinalState() > 0 && iee < 6) {
-                genelectron_pt[iee]  = particle->pt();
-                genelectron_eta[iee] = particle->eta();
-                genelectron_phi[iee] = particle->phi();
-                iee++;
-            }
-        }
-    }
-
-	if(RunOnMC_){
-		int ijj=0;
-		edm::Handle<reco::GenJetCollection> genJets;
-		iEvent.getByToken(genJet_,genJets);
-		reco::GenJetCollection::const_iterator i_jet;
-		for( i_jet=genJets->begin(); i_jet != genJets->end();i_jet++){
-			genjet_e[ijj] = i_jet->energy();
-			genjet_pt[ijj]= i_jet->pt();
-			genjet_eta[ijj]= i_jet->eta();
-			genjet_phi[ijj]=i_jet->phi();
-			ijj++;
-		}
+		gen_photon_lepton_info(iEvent);
+		gen_jet_info(iEvent);
 	}
 
-   edm::Handle<edm::View<pat::Muon>> goodmus;
-   iEvent.getByToken(goodmuonToken_, goodmus);
-   edm::Handle<edm::View<pat::Electron>> goodeles;
-   iEvent.getByToken(goodeleToken_, goodeles);
-
-    edm::Handle<edm::View<pat::Muon>> loosemus;
-    iEvent.getByToken(loosemuonToken_, loosemus);
-    edm::Handle<edm::View<pat::Electron>> looseeles;
-    iEvent.getByToken(looseelectronToken_, looseeles);
-    edm::Handle<edm::View<reco::Candidate>> metHandle;
-    iEvent.getByToken(metSrc_, metHandle);
-
     //filter
-    iEvent.getByToken(noiseFilterToken_, noiseFilterBits_);
-    const edm::TriggerNames& names = iEvent.triggerNames(*noiseFilterBits_);
-    for (unsigned int i = 0, n = noiseFilterBits_->size(); i < n; ++i) {
-        if (names.triggerName(i) == HBHENoiseFilter_Selector_)
-            passFilter_HBHE_ = noiseFilterBits_->accept(i);
-        if (names.triggerName(i) == HBHENoiseIsoFilter_Selector_)
-            passFilter_HBHEIso_ = noiseFilterBits_->accept(i);
-        if (names.triggerName(i) == ECALDeadCellNoiseFilter_Selector_)
-            passFilter_globalTightHalo_ = noiseFilterBits_->accept(i);
-        if (names.triggerName(i) == ECALDeadCellNoiseFilter_Selector_)
-            passFilter_ECALDeadCell_ = noiseFilterBits_->accept(i);
-        if (names.triggerName(i) == GoodVtxNoiseFilter_Selector_)
-            passFilter_GoodVtx_ = noiseFilterBits_->accept(i);
-        if (names.triggerName(i) == EEBadScNoiseFilter_Selector_)
-            passFilter_EEBadSc_ = noiseFilterBits_->accept(i);
-    }
-    edm::Handle<bool> badMuonResultHandle;
-    edm::Handle<bool> badChargedHadronResultHandle;
-    iEvent.getByToken(badMuon_Selector_, badMuonResultHandle);
-    iEvent.getByToken(badChargedHadron_Selector_, badChargedHadronResultHandle);
-    passFilter_badMuon_          = *badMuonResultHandle;
-    passFilter_badChargedHadron_ = *badChargedHadronResultHandle;
+	filter_info(iEvent);	
 
-    const reco::Candidate& leptonicV = leptonicVs->at(0);
-    const reco::Candidate& metCand   = metHandle->at(0);
-    const reco::Candidate& lepton    = (*leptonicV.daughter(0));
-
+	//Vertice
     edm::Handle<reco::VertexCollection> vertices;
     iEvent.getByToken(VertexToken_, vertices);
     if (vertices->empty()) {
         outTree_->Fill();
         return;
-    }  // skip the event if no PV foundoutTree_->Fill();
+    }  
+	
     nVtx                                                   = vertices->size();
     reco::VertexCollection::const_iterator firstGoodVertex = vertices->end();
     for (reco::VertexCollection::const_iterator vtx = vertices->begin(); vtx != vertices->end(); ++vtx) {
@@ -274,419 +131,30 @@ void PKUTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
             break;
         }
     }
+
     if (firstGoodVertex == vertices->end()) {
         outTree_->Fill();
         return;
-    }  // skip event if there are no good PVsoutTree_->Fill();
+    } 
 
-    // ************************* MET ********************** //
-    edm::Handle<pat::METCollection> METs_;
-    bool defaultMET = iEvent.getByToken(metInputToken_ , METs_ );
+    // MET info
+	met_info(iEvent);
+    
+	// lepton, V info
+	leptonicV_info(iEvent);
 
-     
-	if(RunOnMC_){
-		const pat::MET &xmet = METs_->front();
-		genMET=xmet.genMET()->pt();
-	}
-	if(defaultMET){
-		addTypeICorr(iEvent);
-		addTypeICorr_user(iEvent);
-		for (const pat::MET &met : *METs_) {
-			//         const float  rawPt    = met.shiftedPt(pat::MET::METUncertainty::NoShift, pat::MET::METUncertaintyLevel::Raw);
-			//         const float  rawPhi   = met.shiftedPhi(pat::MET::METUncertainty::NoShift, pat::MET::METUncertaintyLevel::Raw);
-			//         const float  rawSumEt = met.shiftedSumEt(pat::MET::METUncertainty::NoShift, pat::MET::METUncertaintyLevel::Raw);
+    if (is_leptonicVs_Empty) {
+        outTree_->Fill();
+        return;
+    }  
 
-
-			const float rawPt = met.uncorPt();
-			const float rawPhi = met.uncorPhi();
-			const float rawSumEt = met.uncorSumEt();
-			TVector2 rawMET_;
-			rawMET_.SetMagPhi (rawPt, rawPhi );
-			Double_t rawPx = rawMET_.Px();
-			Double_t rawPy = rawMET_.Py();
-			Double_t rawEt = std::hypot(rawPx,rawPy);
-			METraw_et = rawEt;
-			METraw_phi = rawPhi;
-			METraw_sumEt = rawSumEt;
-
-			double pxcorr = rawPx+TypeICorrMap_["corrEx"];
-			double pycorr = rawPy+TypeICorrMap_["corrEy"];
-			double et     = std::hypot(pxcorr,pycorr);
-			double sumEtcorr = rawSumEt+TypeICorrMap_["corrSumEt"];
-
-
-			// Marked for debug
-			//------------------central value, correction from JetuserData---------------------
-			double pxcorr_new= rawPx+TypeICorrMap_user_["corrEx_JEC"]+TypeICorrMap_user_["corrEx_JER"];
-			double pycorr_new= rawPy+TypeICorrMap_user_["corrEy_JEC"]+TypeICorrMap_user_["corrEy_JER"];
-			double et_new     = std::hypot(pxcorr_new,pycorr_new);
-			double sumEtcorr_new = rawSumEt+TypeICorrMap_user_["corrSumEt_JEC"]+TypeICorrMap_user_["corrSumEt_JER"];
-			//----for JEC uncertainty study
-			double pxcorr_JEC_up = rawPx+TypeICorrMap_user_["corrEx_JEC_up"]+TypeICorrMap_user_["corrEx_JER"];
-			double pycorr_JEC_up = rawPy+TypeICorrMap_user_["corrEy_JEC_up"]+TypeICorrMap_user_["corrEy_JER"];
-			double et_JEC_up     = std::hypot(pxcorr_JEC_up, pycorr_JEC_up);
-			double sumEtcorr_JEC_up = rawSumEt+TypeICorrMap_user_["corrSumEt_JEC_up"]+TypeICorrMap_user_["corrSumEt_JER"];
-			double pxcorr_JEC_down = rawPx+TypeICorrMap_user_["corrEx_JEC_down"]+TypeICorrMap_user_["corrEx_JER"];
-			double pycorr_JEC_down = rawPy+TypeICorrMap_user_["corrEy_JEC_down"]+TypeICorrMap_user_["corrEy_JER"];
-			double et_JEC_down     = std::hypot(pxcorr_JEC_down, pycorr_JEC_down);
-			double sumEtcorr_JEC_down = rawSumEt+TypeICorrMap_user_["corrSumEt_JEC_down"]+TypeICorrMap_user_["corrSumEt_JER"];
-			//----for JER uncertainty study
-			double pxcorr_JER_up = rawPx+TypeICorrMap_user_["corrEx_JEC"]+TypeICorrMap_user_["corrEx_JER_up"];
-			double pycorr_JER_up = rawPy+TypeICorrMap_user_["corrEy_JEC"]+TypeICorrMap_user_["corrEy_JER_up"];
-			double et_JER_up     = std::hypot(pxcorr_JER_up, pycorr_JER_up);
-			double sumEtcorr_JER_up = rawSumEt+TypeICorrMap_user_["corrSumEt_JEC"]+TypeICorrMap_user_["corrSumEt_JER_up"];
-			double pxcorr_JER_down = rawPx+TypeICorrMap_user_["corrEx_JEC"]+TypeICorrMap_user_["corrEx_JER_down"];
-			double pycorr_JER_down = rawPy+TypeICorrMap_user_["corrEy_JEC"]+TypeICorrMap_user_["corrEy_JER_down"];
-			double et_JER_down     = std::hypot(pxcorr_JER_down,pycorr_JER_down);
-			double sumEtcorr_JER_down = rawSumEt+TypeICorrMap_user_["corrSumEt_JEC"]+TypeICorrMap_user_["corrSumEt_JER_down"];
-			//------------------ correction from JetuserData---------------------
-			// Marked for debug
-			TLorentzVector corrmet;
-
-			corrmet.SetPxPyPzE(pxcorr,pycorr,0.,et);
-			MET_et = et;
-			MET_phi = corrmet.Phi();
-			MET_sumEt = sumEtcorr;
-			useless = sumEtcorr;
-			useless = rawEt;
-			MET_corrPx = TypeICorrMap_["corrEx"];
-			MET_corrPy = TypeICorrMap_["corrEy"];
-
-			// Marked for debug
-			MET_et_new= et_new;
-			MET_et_JEC_up = et_JEC_up;
-			MET_et_JEC_down = et_JEC_down;
-			MET_et_JER_up = et_JER_up;
-			MET_et_JER_down = et_JER_down;
-
-			corrmet.SetPxPyPzE(pxcorr_new,pycorr_new,0.,et_new);
-			MET_phi_new = corrmet.Phi();
-			corrmet.SetPxPyPzE(pxcorr_JEC_up,pycorr_JEC_up,0.,et_JEC_up);
-			MET_phi_JEC_up = corrmet.Phi();
-			corrmet.SetPxPyPzE(pxcorr_JEC_down,pycorr_JEC_down,0.,et_JEC_down);
-			MET_phi_JEC_down = corrmet.Phi();
-			corrmet.SetPxPyPzE(pxcorr_JER_up,pycorr_JER_up,0.,et_JER_up);
-			MET_phi_JER_up = corrmet.Phi();
-			corrmet.SetPxPyPzE(pxcorr_JER_down,pycorr_JER_down,0.,et_JER_down);
-			MET_phi_JER_down = corrmet.Phi();
-
-			MET_sumEt_new = sumEtcorr_new;
-			MET_sumEt_JEC_up = sumEtcorr_JEC_up;
-			MET_sumEt_JEC_down = sumEtcorr_JEC_down;
-			MET_sumEt_JER_up = sumEtcorr_JER_up;
-			MET_sumEt_JER_down = sumEtcorr_JER_down;
-			// Marked for debug
-		}
-	}
-    //------------------------------------
-    /// For the time being, set these to 1
-    triggerWeight       = 1.0;
-    pileupWeight        = 1.0;
-    double targetEvents = targetLumiInvPb_ * crossSectionPb_;
-    lumiWeight          = targetEvents / originalNEvents_;
-    lep                 = abs(leptonicV.daughter(0)->pdgId());  //std::max(abs(leptonicV.daughter(0)->pdgId()), abs(leptonicV.daughter(1)->pdgId()));
-    ptVlep              = leptonicV.pt();
-    yVlep               = leptonicV.eta();
-    phiVlep             = leptonicV.phi();
-    massVlep            = leptonicV.mass();
-    mtVlep              = leptonicV.mt();
-    ptlep1              = leptonicV.daughter(1)->pt();
-    etalep1             = leptonicV.daughter(1)->eta();
-    philep1             = leptonicV.daughter(1)->phi();
-    energylep1          = leptonicV.daughter(1)->energy();
-    if (leptonicV.daughter(0)->isElectron() || leptonicV.daughter(0)->isMuon()) {
-        ptlep1     = leptonicV.daughter(0)->pt();
-        etalep1    = leptonicV.daughter(0)->eta();
-        philep1    = leptonicV.daughter(0)->phi();
-        energylep1 = leptonicV.daughter(0)->energy();
-    }
-    met        = metCand.pt();
-    metPhi     = metCand.phi();
-    mtVlepnew  = sqrt(2 * ptlep1 * met * (1.0 - cos(philep1 - metPhi)));
-    nlooseeles = looseeles->size();
-    nloosemus  = loosemus->size();
-       ngoodmus   = goodmus->size();
-       ngoodeles   = goodeles->size();
-
-
-    TLorentzVector glepton;
-    glepton.SetPtEtaPhiE(ptlep1, etalep1, philep1, energylep1);
-    math::XYZTLorentzVector     neutrinoP4 = getNeutrinoP4(MET_et, MET_phi, glepton, 1);
-    math::XYZTLorentzVector     neutrinoP4_new = getNeutrinoP4(MET_et_new, MET_phi_new, glepton, 1);
-    math::XYZTLorentzVector     neutrinoP4_JEC_up = getNeutrinoP4(MET_et_JEC_up, MET_phi_JEC_up, glepton, 1);
-    math::XYZTLorentzVector     neutrinoP4_JEC_down = getNeutrinoP4(MET_et_JEC_down, MET_phi_JEC_down, glepton, 1);
-    math::XYZTLorentzVector     neutrinoP4_JER_up = getNeutrinoP4(MET_et_JER_up, MET_phi_JER_up, glepton, 1);
-    math::XYZTLorentzVector     neutrinoP4_JER_down = getNeutrinoP4(MET_et_JER_down, MET_phi_JER_down, glepton, 1);
-    reco::CandidateBaseRef      METBaseRef = metHandle->refAt(0);  //?????
-    reco::ShallowCloneCandidate neutrino(METBaseRef, 0, neutrinoP4);
-    reco::ShallowCloneCandidate neutrino_new(METBaseRef, 0, neutrinoP4_new);
-    reco::ShallowCloneCandidate neutrino_JEC_up(METBaseRef, 0, neutrinoP4_JEC_up);
-    reco::ShallowCloneCandidate neutrino_JEC_down(METBaseRef, 0, neutrinoP4_JEC_down);
-    reco::ShallowCloneCandidate neutrino_JER_up(METBaseRef, 0, neutrinoP4_JER_up);
-    reco::ShallowCloneCandidate neutrino_JER_down(METBaseRef, 0, neutrinoP4_JER_down);
-    reco::CompositeCandidate    WLeptonic;
-    reco::CompositeCandidate    WLeptonic_new;
-    reco::CompositeCandidate    WLeptonic_JEC_up;
-    reco::CompositeCandidate    WLeptonic_JEC_down;
-    reco::CompositeCandidate    WLeptonic_JER_up;
-    reco::CompositeCandidate    WLeptonic_JER_down;
-    WLeptonic.addDaughter(lepton);
-    WLeptonic.addDaughter(neutrino);
-    WLeptonic_new.addDaughter(lepton);
-    WLeptonic_new.addDaughter(neutrino_new);
-    WLeptonic_JEC_up.addDaughter(lepton);
-    WLeptonic_JEC_up.addDaughter(neutrino_JEC_up);
-    WLeptonic_JEC_down.addDaughter(lepton);
-    WLeptonic_JEC_down.addDaughter(neutrino_JEC_down);
-    WLeptonic_JER_up.addDaughter(lepton);
-    WLeptonic_JER_up.addDaughter(neutrino_JER_up);
-    WLeptonic_JER_down.addDaughter(lepton);
-    WLeptonic_JER_down.addDaughter(neutrino_JER_down);
-
-    AddFourMomenta addP4;
-    addP4.set(WLeptonic);
-    AddFourMomenta addP4_new;
-    addP4_new.set(WLeptonic_new);
-    AddFourMomenta addP4_JEC_up;
-    addP4_JEC_up.set(WLeptonic_JEC_up);
-    AddFourMomenta addP4_JEC_down;
-    addP4_JEC_down.set(WLeptonic_JEC_down);
-    AddFourMomenta addP4_JER_up;
-    addP4_JER_up.set(WLeptonic_JER_up);
-    AddFourMomenta addP4_JER_down;
-    addP4_JER_down.set(WLeptonic_JER_down);
-
-    ptVlepJEC    = WLeptonic.pt();
-    yVlepJEC     = WLeptonic.eta();
-    phiVlepJEC   = WLeptonic.phi();
-    massVlepJEC  = WLeptonic.mass();
-    mtVlepJEC    = WLeptonic.mt();
-    mtVlepJECnew = sqrt(2 * ptlep1 * MET_et * (1.0 - cos(philep1 - MET_phi)));
-
-    ptVlepJEC_new    = WLeptonic_new.pt();
-    yVlepJEC_new     = WLeptonic_new.eta();
-    phiVlepJEC_new   = WLeptonic_new.phi();
-    massVlepJEC_new  = WLeptonic_new.mass();
-    mtVlepJEC_new    = WLeptonic_new.mt();
-    mtVlepJECnew_new = sqrt(2 * ptlep1 * MET_et_new * (1.0 - cos(philep1 - MET_phi_new)));
-
-    ptVlepJEC_JEC_up    = WLeptonic_JEC_up.pt();
-    yVlepJEC_JEC_up     = WLeptonic_JEC_up.eta();
-    phiVlepJEC_JEC_up   = WLeptonic_JEC_up.phi();
-    massVlepJEC_JEC_up  = WLeptonic_JEC_up.mass();
-    mtVlepJEC_JEC_up    = WLeptonic_JEC_up.mt();
-    mtVlepJECnew_JEC_up = sqrt(2 * ptlep1 * MET_et_JEC_up * (1.0 - cos(philep1 - MET_phi_JEC_up)));
-
-    ptVlepJEC_JEC_down    = WLeptonic_JEC_down.pt();
-    yVlepJEC_JEC_down     = WLeptonic_JEC_down.eta();
-    phiVlepJEC_JEC_down   = WLeptonic_JEC_down.phi();
-    massVlepJEC_JEC_down  = WLeptonic_JEC_down.mass();
-    mtVlepJEC_JEC_down    = WLeptonic_JEC_down.mt();
-    mtVlepJECnew_JEC_down = sqrt(2 * ptlep1 * MET_et_JEC_down * (1.0 - cos(philep1 - MET_phi_JEC_down)));
-
-    ptVlepJEC_JER_up    = WLeptonic_JER_up.pt();
-    yVlepJEC_JER_up     = WLeptonic_JER_up.eta();
-    phiVlepJEC_JER_up   = WLeptonic_JER_up.phi();
-    massVlepJEC_JER_up  = WLeptonic_JER_up.mass();
-    mtVlepJEC_JER_up    = WLeptonic_JER_up.mt();
-    mtVlepJECnew_JER_up = sqrt(2 * ptlep1 * MET_et_JER_up * (1.0 - cos(philep1 - MET_phi_JER_up)));
-
-    ptVlepJEC_JER_down    = WLeptonic_JER_down.pt();
-    yVlepJEC_JER_down     = WLeptonic_JER_down.eta();
-    phiVlepJEC_JER_down   = WLeptonic_JER_down.phi();
-    massVlepJEC_JER_down  = WLeptonic_JER_down.mass();
-    mtVlepJEC_JER_down    = WLeptonic_JER_down.mt();
-    mtVlepJECnew_JER_down = sqrt(2 * ptlep1 * MET_et_JER_down * (1.0 - cos(philep1 - MET_phi_JER_down)));
     if (RunOnMC_ && ptlep1 > 10) {
-        //const auto lept = lepton;
         lepton_istrue = matchToTrueLep(etalep1, philep1, genParticles, dR1_, ispromptLep_);
     }
 
-    // ************************* Photon Jets Information****************** //
-    // *************************************************************//
-    double rhoVal_;
-    rhoVal_ = -99.;
-    rhoVal_ = *rho_;
-    edm::Handle<edm::ValueMap<float>> full5x5SigmaIEtaIEtaMap;
-    iEvent.getByToken(full5x5SigmaIEtaIEtaMapToken_, full5x5SigmaIEtaIEtaMap);
-    edm::Handle<edm::ValueMap<float>> phoChargedIsolationMap;
-    iEvent.getByToken(phoChargedIsolationToken_, phoChargedIsolationMap);
-    edm::Handle<edm::ValueMap<float>> phoNeutralHadronIsolationMap;
-    iEvent.getByToken(phoNeutralHadronIsolationToken_, phoNeutralHadronIsolationMap);
-    edm::Handle<edm::ValueMap<float>> phoPhotonIsolationMap;
-    iEvent.getByToken(phoPhotonIsolationToken_, phoPhotonIsolationMap);
+	// photon info
+	photon_info(iEvent);
 
-    photonet        = -10.;
-    photonet_f      = -10.;
-    iphoton         = -1;
-    iphoton_f       = -1;
-    int cachecount1 = 0;  //added by Qianming Huang !!!
-    int cachecount2 = 0;  //added by Qianming Huang !!!
-    for (size_t ip = 0; ip < photons->size(); ip++) {
-        const auto pho = photons->ptrAt(ip);
-
-        double phosc_eta = pho->superCluster()->eta();
-        double phosc_phi = pho->superCluster()->phi();
-
-
-         double pho_ieie = (*photons)[ip].full5x5_sigmaIetaIeta();
-         double chIso1 = (*photons)[ip].userFloat("phoChargedIsolation");
-         double nhIso1 = (*photons)[ip].userFloat("phoNeutralHadronIsolation");
-         double phIso1 = (*photons)[ip].userFloat("phoPhotonIsolation");
-        
-            double chiso=std::max(0.0, chIso1 - rhoVal_*EAch(fabs((*photons)[ip].eta()))); //effAreaChHadrons_.getEffectiveArea(fabs(phosc_eta)));
-//            double chiso=std::max((*photons)[ip].chargedHadronIso()-rhoVal_*EAch(fabs((*photons)[ip].eta())),0.0);
-            double nhiso=std::max(0.0, nhIso1 - rhoVal_*EAnh(fabs((*photons)[ip].eta()))); //effAreaNeuHadrons_.getEffectiveArea(fabs(phosc_eta)));
-//            double nhiso=std::max((*photons)[ip].neutralHadronIso()-rhoVal_*EAnh(fabs((*photons)[ip].eta())),0.0);
-            double phoiso=std::max(0.0, phIso1 - rhoVal_*EApho(fabs((*photons)[ip].eta()))); //effAreaPhotons_.getEffectiveArea(fabs(phosc_eta)));
-//            double phoiso=std::max((*photons)[ip].photonIso()-rhoVal_*EApho(fabs((*photons)[ip].eta())),0.0);
-
-
-        int                                   ismedium_photon   = 0;
-        int                                   ismedium_photon_f = 0;
-        edm::Handle<edm::View<pat::Electron>> electrons;
-        iEvent.getByToken(electronToken_, electrons);
-        edm::Handle<reco::BeamSpot> beamSpot;
-        iEvent.getByToken(beamSpotToken_, beamSpot);
-        edm::Handle<std::vector<reco::Conversion>> conversions;
-        iEvent.getByToken(conversionsToken_, conversions);
-        passEleVeto       = (!hasMatchedPromptElectron((*photons)[ip].superCluster(), electrons, conversions, beamSpot->position()));
-        passEleVetonew    = (*photons)[ip].passElectronVeto();
-        passPixelSeedVeto = (*photons)[ip].hasPixelSeed();
-
-        if (ip < 6) {
-            photon_pt[ip]     = (*photons)[ip].pt();
-            photon_eta[ip]    = (*photons)[ip].eta();
-            photon_phi[ip]    = (*photons)[ip].phi();
-            photon_e[ip]      = (*photons)[ip].energy();
-            photonsc_eta[ip]  = phosc_eta;
-            photonsc_phi[ip]  = phosc_phi;
-            photon_pev[ip]    = passEleVeto;
-            photon_pevnew[ip] = passEleVetonew;
-            photon_ppsv[ip]   = passPixelSeedVeto;
-            photon_iseb[ip]   = (*photons)[ip].isEB();
-            photon_isee[ip]   = (*photons)[ip].isEE();
-            photon_hoe[ip]    = (*photons)[ip].hadTowOverEm();
-            photon_sieie[ip]  = pho_ieie;  //(*photons)[ip].sigmaIetaIeta();
-            photon_sieie2[ip] = (*photons)[ip].sigmaIetaIeta();
-            photon_chiso[ip]  = chiso;
-            photon_nhiso[ip]  = nhiso;
-            photon_phoiso[ip] = phoiso;
-            if (RunOnMC_ && photon_pt[ip] > 10) {
-                const auto pho    = photons->ptrAt(ip);
-                photon_istrue[ip] = matchToTruth(*pho, genParticles, ISRPho, dR_, photon_isprompt[ip]);
-            }
-            photon_drla[ip] = deltaR(photonsc_eta[ip], photonsc_phi[ip], etalep1, philep1);
-            TLorentzVector tp4;
-            tp4.SetPtEtaPhiE(photon_pt[ip], photon_eta[ip], photon_phi[ip], photon_e[ip]);
-            photon_mla[ip] = (tp4 + glepton).M();
-            TLorentzVector fwp4;
-            fwp4.SetPtEtaPhiE(WLeptonic.pt(), WLeptonic.eta(), WLeptonic.phi(), WLeptonic.energy());
-            photon_mva[ip] = (tp4 + fwp4).M();
-        }
-
-        //if (fabs(phosc_eta) < 1.4442 && (*photons)[ip].hadTowOverEm() < 0.0396 && photon_sieie[ip] < 0.01022 && chiso < 0.441 && nhiso < (2.725 + (0.0148 * (*photons)[ip].pt() + 0.000017 * (*photons)[ip].pt() * (*photons)[ip].pt())) && phoiso < (2.571 + 0.0047 * (*photons)[ip].pt())) {ismedium_photon = 1;}
-        //if (fabs(phosc_eta) > 1.566 && fabs(phosc_eta) < 2.5 && (*photons)[ip].hadTowOverEm() < 0.0219 && photon_sieie[ip] < 0.03001 && chiso < 0.442 && nhiso < (1.715 + (0.0163 * (*photons)[ip].pt() + 0.000014 * (*photons)[ip].pt() * (*photons)[ip].pt())) && phoiso < (3.863 + 0.0034 * (*photons)[ip].pt())) {ismedium_photon = 1;}
-
-        if (fabs(phosc_eta) < 1.4442 && (*photons)[ip].hadTowOverEm() < 0.02197 && photon_sieie[ip] < 0.01015 && chiso < 1.141 && nhiso < (1.189 + (0.01512 * (*photons)[ip].pt() + 0.00002259 * (*photons)[ip].pt() * (*photons)[ip].pt())) && phoiso < (2.08 + 0.004017 * (*photons)[ip].pt())) {ismedium_photon = 1;}
-        if (fabs(phosc_eta) > 1.566 && fabs(phosc_eta) < 2.5 && (*photons)[ip].hadTowOverEm() < 0.0326 && photon_sieie[ip] < 0.0272 && chiso < 1.051 && nhiso < (2.718 + (0.0117 * (*photons)[ip].pt() + 0.000023 * (*photons)[ip].pt() * (*photons)[ip].pt())) && phoiso < (3.867 + 0.0037 * (*photons)[ip].pt())) {ismedium_photon = 1;}
-
-
-        if (ismedium_photon == 1 && deltaR(phosc_eta, phosc_phi, etalep1, philep1) > 0.5) {
-            if (cachecount1 == 0) {
-                photonet = (*photons)[ip].pt();
-                iphoton  = ip;
-            }
-            cachecount1++;
-            if ((*photons)[ip].pt() > photonet) {
-                photonet = (*photons)[ip].pt();
-                iphoton  = ip;
-            }
-        }
-        //////////////////////////////////for fake photon study, store photon without sieie cut
-        //Inverting loose ID
-        //            if(passEleVetonew && (*photons)[ip].isEB() && (*photons)[ip].hadTowOverEm()<5*0.0597 && chiso<10 && nhiso<std::min(0.2*(*photons)[ip].pt(), 5.*(10.910 + (0.0148*(*photons)[ip].pt()+0.000017*(*photons)[ip].pt()*(*photons)[ip].pt())))  && phoiso<std::min(0.2*(*photons)[ip].pt(), 5.*(3.630+0.0047*(*photons)[ip].pt())) && !(photon_sieie[ip]<0.01031 && chiso<4)) {ismedium_photon_f=1;}  // && nhiso<(10.910 + (0.0148*(*photons)[ip].pt()+0.000017*(*photons)[ip].pt()*(*photons)[ip].pt())) && phoiso<(3.630+0.0047*(*photons)[ip].pt())
-        //            if(passEleVetonew && (*photons)[ip].isEE() && (*photons)[ip].hadTowOverEm()<5*0.0481 && chiso<10 && nhiso<std::min(0.2*(*photons)[ip].pt(), 5.*(5.931 + (0.0163*(*photons)[ip].pt()+0.000014*(*photons)[ip].pt()*(*photons)[ip].pt())))  && phoiso<std::min(0.2*(*photons)[ip].pt(), 5.*(6.641+0.0034*(*photons)[ip].pt())) && !(photon_sieie[ip]<0.03013 && chiso<4)) {ismedium_photon_f=1;}  // && nhiso<(5.931 + (0.0163*(*photons)[ip].pt()+0.000014*(*photons)[ip].pt()*(*photons)[ip].pt())) && phoiso<(6.641+0.0034*(*photons)[ip].pt())
-
-        //            if(passEleVetonew && phosc_eta<1.4442 && (*photons)[ip].hadTowOverEm()<0.0597 && chiso<10 && nhiso<std::min(0.2*(*photons)[ip].pt(), (10.910 + (0.0148*(*photons)[ip].pt()+0.000017*(*photons)[ip].pt()*(*photons)[ip].pt())))  && phoiso<std::min(0.2*(*photons)[ip].pt(), (3.630+0.0047*(*photons)[ip].pt())) && !(photon_sieie[ip]<0.01031 && chiso<4)) {ismedium_photon_f=1;}
-        //            if(passEleVetonew && phosc_eta>1.566 && phosc_eta<2.5 && (*photons)[ip].hadTowOverEm()<0.0481 && chiso<10 && nhiso<std::min(0.2*(*photons)[ip].pt(), (5.931 + (0.0163*(*photons)[ip].pt()+0.000014*(*photons)[ip].pt()*(*photons)[ip].pt())))  && phoiso<std::min(0.2*(*photons)[ip].pt(), (6.641+0.0034*(*photons)[ip].pt())) && !(photon_sieie[ip]<0.03013 && chiso<4)) {ismedium_photon_f=1;}
-
-        //            if(passEleVetonew && phosc_eta<1.4442 && (*photons)[ip].hadTowOverEm()<0.0396 && chiso<10 && nhiso<(2.725 + (0.0148*(*photons)[ip].pt()+0.000017*(*photons)[ip].pt()*(*photons)[ip].pt()))  && phoiso<(2.571+0.0047*(*photons)[ip].pt()) && !(photon_sieie[ip]<0.01022 && chiso<4)) {ismedium_photon_f=1;}
-        //            if(passEleVetonew && phosc_eta>1.566 && phosc_eta<2.5 && (*photons)[ip].hadTowOverEm()<0.0219 && chiso<10 && nhiso<(1.715 + (0.0163*(*photons)[ip].pt()+0.000014*(*photons)[ip].pt()*(*photons)[ip].pt()))  && phoiso<(3.863+0.0034*(*photons)[ip].pt()) && !(photon_sieie[ip]<0.03001 && chiso<4)) {ismedium_photon_f=1;}
-
-        if (fabs(phosc_eta) < 1.4442 && !((*photons)[ip].hadTowOverEm() < 0.02197 && photon_sieie[ip] < 0.01015 && chiso < 1.141 && nhiso < (1.189 + (0.01512 * (*photons)[ip].pt() + 0.00002259 * (*photons)[ip].pt() * (*photons)[ip].pt())) && phoiso < (2.08 + 0.004017 * (*photons)[ip].pt()))) {
-            ismedium_photon_f = 1;
-        }
-        if (fabs(phosc_eta) > 1.566 && fabs(phosc_eta) < 2.5 && !((*photons)[ip].hadTowOverEm() < 0.0326 && photon_sieie[ip] < 0.0272 && chiso < 1.051 && nhiso < (2.718 + (0.0117 * (*photons)[ip].pt() + 0.000023 * (*photons)[ip].pt() * (*photons)[ip].pt())) && phoiso < (3.867 + 0.0037 * (*photons)[ip].pt()))) {
-            ismedium_photon_f = 1;
-        }
-
-        //            if(phosc_eta<1.4442 && (*photons)[ip].hadTowOverEm()<0.0597 && chiso<15 && (nhiso<std::min(0.2*(*photons)[ip].pt(), 5.*(10.910 + (0.0148*(*photons)[ip].pt()+0.000017*(*photons)[ip].pt()*(*photons)[ip].pt())))  || phoiso<std::min(0.2*(*photons)[ip].pt(), 5.*(3.630+0.0047*(*photons)[ip].pt())) || !(photon_sieie[ip]<0.01031 && chiso<4))) {ismedium_photon_f=1;} // && nhiso<(10.910 + (0.0148*(*photons)[ip].pt()+0.000017*(*photons)[ip].pt()*(*photons)[ip].pt())) && phoiso<(3.630+0.0047*(*photons)[ip].pt())
-        //            if(phosc_eta>1.566 && phosc_eta<2.5  && (*photons)[ip].hadTowOverEm()<0.0481 && chiso<15 && (nhiso<std::min(0.2*(*photons)[ip].pt(), 5.*(5.931 + (0.0163*(*photons)[ip].pt()+0.000014*(*photons)[ip].pt()*(*photons)[ip].pt())))  || phoiso<std::min(0.2*(*photons)[ip].pt(), 5.*(6.641+0.0034*(*photons)[ip].pt())) || !(photon_sieie[ip]<0.03013 && chiso<4))) {ismedium_photon_f=1;}  // && nhiso<(5.931 + (0.0163*(*photons)[ip].pt()+0.000014*(*photons)[ip].pt()*(*photons)[ip].pt())) && phoiso<(6.641+0.0034*(*photons)[ip].pt())
-
-        if (ismedium_photon_f == 1 && deltaR(phosc_eta, phosc_phi, etalep1, philep1) > 0.5) {
-            if (cachecount2 == 0) {
-                photonet_f = (*photons)[ip].pt();
-                iphoton_f  = ip;
-            }
-            cachecount2++;
-            if ((*photons)[ip].pt() > photonet_f) {
-                photonet_f = (*photons)[ip].pt();
-                iphoton_f  = ip;
-            }
-        }
-        ////////////////////////////////////////////////////////////////////////////////////////
-    }
-
-    //Gen photon matching
-    if (RunOnMC_ && iphoton > -1) {
-        const auto pho1 = photons->ptrAt(iphoton);
-        isTrue_         = matchToTruth(*pho1, genParticles, ISRPho, dR_, isprompt_);
-    }
-
-    if (iphoton > -1 && iphoton < 6) {
-        photonet     = photon_pt[iphoton];   //(*photons)[iphoton].pt();
-        photoneta    = photon_eta[iphoton];  //(*photons)[iphoton].eta();
-        photonphi    = photon_phi[iphoton];  //(*photons)[iphoton].phi();
-        photone      = photon_e[iphoton];    //(*photons)[iphoton].energy();
-        photonsceta  = photonsc_eta[iphoton];
-        photonscphi  = photonsc_phi[iphoton];
-        photonsieie  = photon_sieie[iphoton];   //(*photons)[iphoton].sigmaIetaIeta();
-        photonphoiso = photon_phoiso[iphoton];  //std::max((*photons)[iphoton].photonIso()-rhoVal_*EApho(fabs((*photons)[iphoton].eta())),0.0);
-        photonchiso  = photon_chiso[iphoton];   //std::max((*photons)[iphoton].chargedHadronIso()-rhoVal_*EAch(fabs((*photons)[iphoton].eta())),0.0);
-        photonnhiso  = photon_nhiso[iphoton];   //std::max((*photons)[iphoton].neutralHadronIso()-rhoVal_*EAnh(fabs((*photons)[iphoton].eta())),0.0);
-        drla         = deltaR(photonsc_eta[iphoton], photonsc_phi[iphoton], etalep1, philep1);
-        TLorentzVector photonp4;
-        photonp4.SetPtEtaPhiE(photonet, photoneta, photonphi, photone);
-        Mla = (photonp4 + glepton).M();
-        TLorentzVector wp4;
-        wp4.SetPtEtaPhiE(WLeptonic.pt(), WLeptonic.eta(), WLeptonic.phi(), WLeptonic.energy());
-        Mva                = (photonp4 + wp4).M();
-        photonhaspixelseed = photon_ppsv[iphoton];
-        photonpasseleveto  = photon_pevnew[iphoton];
-    }
-
-    if (iphoton_f > -1 && iphoton_f < 6) {
-        photonet_f     = photon_pt[iphoton_f];   //(*photons)[iphoton_f].pt();
-        photoneta_f    = photon_eta[iphoton_f];  //(*photons)[iphoton_f].eta();
-        photonphi_f    = photon_phi[iphoton_f];  //(*photons)[iphoton_f].phi();
-        photone_f      = photon_e[iphoton_f];    //(*photons)[iphoton_f].energy();
-        photonsceta_f  = photonsc_eta[iphoton_f];
-        photonscphi_f  = photonsc_phi[iphoton_f];
-        photonsieie_f  = photon_sieie[iphoton_f];   //(*photons)[iphoton_f].sigmaIetaIeta();
-        photonphoiso_f = photon_phoiso[iphoton_f];  //std::max((*photons)[iphoton_f].photonIso()-rhoVal_*EApho(fabs((*photons)[iphoton_f].eta())),0.0);
-        photonchiso_f  = photon_chiso[iphoton_f];   //std::max((*photons)[iphoton_f].chargedHadronIso()-rhoVal_*EAch(fabs((*photons)[iphoton_f].eta())),0.0);
-        photonnhiso_f  = photon_nhiso[iphoton_f];   //std::max((*photons)[iphoton_f].neutralHadronIso()-rhoVal_*EAnh(fabs((*photons)[iphoton_f].eta())),0.0);
-        drla_f         = deltaR(photonsc_eta[iphoton_f], photonsc_phi[iphoton_f], etalep1, philep1);
-        TLorentzVector photonp4_f;
-        photonp4_f.SetPtEtaPhiE(photonet_f, photoneta_f, photonphi_f, photone_f);
-        Mla_f = (photonp4_f + glepton).M();
-        TLorentzVector wp4_f;
-        wp4_f.SetPtEtaPhiE(WLeptonic.pt(), WLeptonic.eta(), WLeptonic.phi(), WLeptonic.energy());
-        Mva_f                = (photonp4_f + wp4_f).M();
-        photonhaspixelseed_f = photon_ppsv[iphoton_f];
-        photonpasseleveto_f  = photon_pevnew[iphoton_f];
-    }
 
     // ************************* AK4 Jets Information****************** //
     // ***********************************************************//
@@ -1605,84 +1073,6 @@ std::cout<<"begin process old jets _f jer down!!!"<<std::endl;
     jecAK4_ = 0;
 
 }
-
-//-------------------------------------------------------------------------------------------------------------------------------------//
-//-------------------------------------------------------------------------------------------------------------------------------------//
-/*
-void PKUTreeMaker::beginRun(const edm::Run& iRun, const edm::EventSetup& iSetup) {
-
-    elPaths1.clear();
-    elPaths2.clear();
-    muPaths1.clear();
-    muPaths2.clear();
-    muPaths3.clear();
-
-    std::cout << "-----begin-----" << std::endl;
-    bool changed;
-    if (!hltConfig.init(iRun, iSetup, "HLT", changed)) {
-        edm::LogError("HltAnalysis") << "Initialization of HLTConfigProvider failed!!";
-        return;
-    }
-    for (size_t i = 0; i < elPaths1_.size(); i++) {
-        std::vector<std::string> foundPaths1 = hltConfig.matched(hltConfig.triggerNames(), elPaths1_[i]);
-        while (!foundPaths1.empty()) {
-            elPaths1.push_back(foundPaths1.back());
-            foundPaths1.pop_back();
-        }
-    }
-    for (size_t i = 0; i < muPaths1_.size(); i++) {
-        std::vector<std::string> foundPaths1 = hltConfig.matched(hltConfig.triggerNames(), muPaths1_[i]);
-        while (!foundPaths1.empty()) {
-            muPaths1.push_back(foundPaths1.back());
-            foundPaths1.pop_back();
-        }
-    }
-    std::cout << "\n************** HLT-1 Information **************\n";
-    for (size_t i = 0; i < elPaths1.size(); i++)
-        std::cout << "\n Electron paths-1:    " << i << "  " << elPaths1[i].c_str() << "\t" << std::endl;
-    for (size_t i = 0; i < muPaths1.size(); i++)
-        std::cout << "\n Muon paths-1:   " << i << "  " << muPaths1[i].c_str() << "\t" << std::endl;
-    std::cout << "\n*********************************************\n\n";
-
-    for (size_t i = 0; i < elPaths2_.size(); i++) {
-        std::vector<std::string> foundPaths2 = hltConfig.matched(hltConfig.triggerNames(), elPaths2_[i]);
-        while (!foundPaths2.empty()) {
-            elPaths2.push_back(foundPaths2.back());
-            foundPaths2.pop_back();
-        }
-    }
-    for (size_t i = 0; i < muPaths2_.size(); i++) {
-        std::vector<std::string> foundPaths2 = hltConfig.matched(hltConfig.triggerNames(), muPaths2_[i]);
-        while (!foundPaths2.empty()) {
-            muPaths2.push_back(foundPaths2.back());
-            foundPaths2.pop_back();
-        }
-    }
-    std::cout << "\n************** HLT-2 Information **************\n";
-    for (size_t i = 0; i < elPaths2.size(); i++)
-        std::cout << "\n Electron paths-2:    " << i << "  " << elPaths2[i].c_str() << "\t" << std::endl;
-    for (size_t i = 0; i < muPaths2.size(); i++)
-        std::cout << "\n Muon paths-2:   " << i << "  " << muPaths2[i].c_str() << "\t" << std::endl;
-    std::cout << "\n*********************************************\n\n";
-    for (size_t i = 0; i < muPaths3_.size(); i++) {
-        std::vector<std::string> foundPaths3 = hltConfig.matched(hltConfig.triggerNames(), muPaths3_[i]);
-        while (!foundPaths3.empty()) {
-            muPaths3.push_back(foundPaths3.back());
-            foundPaths3.pop_back();
-        }
-    }
-
-    std::cout << "\n************** HLT-3 Information **************\n";
-    for (size_t i = 0; i < muPaths3.size(); i++)
-        std::cout << "\n Muon paths-3:   " << i << "  " << muPaths3[i].c_str() << "\t" << std::endl;
-    std::cout << "\n*********************************************\n\n";
-}
-
-void PKUTreeMaker::endJob() {
-    std::cout << "PKUTreeMaker endJob()..." << std::endl;
-}
-*/
-
 
 //define this as a plug-in
 DEFINE_FWK_MODULE(PKUTreeMaker);

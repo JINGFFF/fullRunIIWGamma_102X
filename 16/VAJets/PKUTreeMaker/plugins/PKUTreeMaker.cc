@@ -73,7 +73,7 @@
 #include "include/met_info.h"
 #include "include/leptonicV_info.h"
 #include "include/photon_info.h"
-
+#include "include/jet_info.h"
 
 
 using namespace std;

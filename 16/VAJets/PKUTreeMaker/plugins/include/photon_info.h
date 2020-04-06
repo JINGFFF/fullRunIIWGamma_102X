@@ -9,9 +9,6 @@ void PKUTreeMaker::photon_info(edm::Event const & iEvent) {
     double fastJetRho = *(rho_.product());
     useless           = fastJetRho;
 
-    edm::Handle<edm::View<pat::Jet>> ak4jets;
-    iEvent.getByToken(ak4jetsSrc_, ak4jets);
-
     edm::Handle<edm::View<pat::Photon>> photons;
     iEvent.getByToken(photonSrc_, photons);
 	
@@ -94,7 +91,8 @@ void PKUTreeMaker::photon_info(edm::Event const & iEvent) {
             tp4.SetPtEtaPhiE(photon_pt[ip], photon_eta[ip], photon_phi[ip], photon_e[ip]);
             photon_mla[ip] = (tp4 + glepton).M();
             TLorentzVector fwp4;
-            fwp4.SetPtEtaPhiE(WLeptonic.pt(), WLeptonic.eta(), WLeptonic.phi(), WLeptonic.energy());
+            fwp4.SetPtEtaPhiE(ptVlepJEC, yVlepJEC, phiVlepJEC, energyVlepJEC);
+            //fwp4.SetPtEtaPhiE(WLeptonic.pt(), WLeptonic.eta(), WLeptonic.phi(), WLeptonic.energy());
             photon_mva[ip] = (tp4 + fwp4).M();
         }
 

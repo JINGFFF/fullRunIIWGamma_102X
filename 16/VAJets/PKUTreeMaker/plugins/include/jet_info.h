@@ -2,6 +2,9 @@
 #define _Jet_
 
 void PKUTreeMaker::jet_info(edm::Event const & iEvent) {
+    edm::Handle<edm::View<pat::Jet>> ak4jets;
+    iEvent.getByToken(ak4jetsSrc_, ak4jets);
+
     Int_t jetindexphoton12[2]            = {-1, -1};
     Int_t jetindexphoton12_f[2]          = {-1, -1};
     Int_t jetindexphoton12_new[2]        = {-1, -1};
@@ -35,7 +38,8 @@ void PKUTreeMaker::jet_info(edm::Event const & iEvent) {
         jecAK4_->setJetPt(uncorrJet.pt());
         jecAK4_->setJetE(uncorrJet.energy());
         jecAK4_->setRho(rhoVal_);
-        jecAK4_->setNPV(vertices->size());
+		jecAK4_->setNPV(nVtx);
+        //jecAK4_->setNPV(vertices->size());
         jecAK4_->setJetA((*ak4jets)[ik].jetArea());
         double corr = jecAK4_->getCorrection();
 

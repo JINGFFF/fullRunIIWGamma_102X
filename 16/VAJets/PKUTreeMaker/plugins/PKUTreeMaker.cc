@@ -97,7 +97,7 @@ void PKUTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
     }
 
 	// store HLT Info
-	hlt_info(edm::Event const & iEvent);
+	hlt_info(iEvent);
 	
 	//Gen info for photon, lepton, and jets
     if (RunOnMC_) {

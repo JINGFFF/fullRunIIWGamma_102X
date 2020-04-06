@@ -6,10 +6,6 @@ void PKUTreeMaker::leptonicV_info(edm::Event const & iEvent) {
     edm::Handle<edm::View<reco::Candidate> > leptonicVs;
     iEvent.getByToken(leptonicVSrc_, leptonicVs);
 	is_leptonicVs_Empty = leptonicVs->empty();	
-
-    const reco::Candidate& leptonicV = leptonicVs->at(0);
-    const reco::Candidate& metCand   = metHandle->at(0);
-    const reco::Candidate& lepton    = (*leptonicV.daughter(0));
    
 	edm::Handle<edm::View<pat::Muon>> goodmus;
 	iEvent.getByToken(goodmuonToken_, goodmus);	
@@ -26,6 +22,10 @@ void PKUTreeMaker::leptonicV_info(edm::Event const & iEvent) {
 	edm::Handle<edm::View<reco::Candidate>> metHandle;
 	iEvent.getByToken(metSrc_, metHandle);	
 
+    const reco::Candidate& leptonicV = leptonicVs->at(0);
+    const reco::Candidate& metCand   = metHandle->at(0);
+    const reco::Candidate& lepton    = (*leptonicV.daughter(0));
+
     triggerWeight       = 1.0;
     pileupWeight        = 1.0;
     double targetEvents = targetLumiInvPb_ * crossSectionPb_;
@@ -35,6 +35,7 @@ void PKUTreeMaker::leptonicV_info(edm::Event const & iEvent) {
     ptVlep              = leptonicV.pt();
     yVlep               = leptonicV.eta();
     phiVlep             = leptonicV.phi();
+	energyVlep			= leptonicV.energy();
     massVlep            = leptonicV.mass();
     mtVlep              = leptonicV.mt();
     ptlep1              = leptonicV.daughter(1)->pt();
@@ -146,6 +147,12 @@ void PKUTreeMaker::leptonicV_info(edm::Event const & iEvent) {
     mtVlepJEC_JER_down    = WLeptonic_JER_down.mt();
     mtVlepJECnew_JER_down = sqrt(2 * ptlep1 * MET_et_JER_down * (1.0 - cos(philep1 - MET_phi_JER_down)));
 
+
+    edm::Handle<edm::View<reco::GenParticle>> genParticles;
+    iEvent.getByToken(genSrc_, genParticles);
+    if (RunOnMC_ && ptlep1 > 10) {
+        lepton_istrue = matchToTrueLep(etalep1, philep1, genParticles, dR1_, ispromptLep_);
+    }
 
 
 }

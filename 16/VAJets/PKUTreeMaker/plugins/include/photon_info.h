@@ -2,6 +2,9 @@
 #define _Photon_
 
 void PKUTreeMaker::photon_info(edm::Event const & iEvent) {
+    edm::Handle<edm::View<reco::GenParticle>> genParticles;
+    iEvent.getByToken(genSrc_, genParticles);
+
     iEvent.getByToken(rhoToken_, rho_);
     double fastJetRho = *(rho_.product());
     useless           = fastJetRho;
@@ -19,7 +22,9 @@ void PKUTreeMaker::photon_info(edm::Event const & iEvent) {
         hasphoton =1.;
     }
 
-    double rhoVal_;
+    TLorentzVector glepton;
+    glepton.SetPtEtaPhiE(ptlep1, etalep1, philep1, energylep1);
+
     rhoVal_ = -99.;
     rhoVal_ = *rho_;
     edm::Handle<edm::ValueMap<float>> full5x5SigmaIEtaIEtaMap;

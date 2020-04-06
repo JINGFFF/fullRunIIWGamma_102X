@@ -45,14 +45,15 @@ private:
     void findFirstNonPhotonMother(const reco::Candidate* particle, int& ancestorPID, int& ancestorStatus);
 
     void setDummyValues();
-	void filter_info();
-	void gen_photon_lepton_info();
-	void gen_jet_info();
-	void leptonicV_info();
-	void photon_info();
-	void hlt_info();
-	void met_info();
-	void weight_info();
+	void filter_info(edm::Event const & iEvent);
+	void gen_photon_lepton_info(edm::Event const & iEvent);
+	void gen_jet_info(edm::Event const & iEvent);
+	void leptonicV_info(edm::Event const & iEvent);
+	void photon_info(edm::Event const & iEvent);
+	void hlt_info(edm::Event const & iEvent);
+	void met_info(edm::Event const & iEvent);
+	void weight_info(edm::Event const & iEvent);
+    void jet_info(edm::Event const & iEvent);
 
     float                                             EAch(float x);
     float                                             EAnh(float x);
@@ -244,6 +245,8 @@ private:
 
 	bool is_leptonicVs_Empty;
 	double energyVlepJEC;
+    double energyVlep;
+    double rhoVal_;
 
     /// Parameters to steer the treeDumper
     int                      originalNEvents_;
